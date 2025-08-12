@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Study Portal Chatbot</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        /* Floating chatbot box */
+        .chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            max-height: 500px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #ccc;
+        }
+
+        /* Header */
+        .chat-header {
+            background-color: #0078d7;
+            color: white;
+            padding: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* Chat messages area */
+        .chat-messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin: 5px 0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .bot-message {
+            background-color: #e3f2fd;
+            align-self: flex-start;
+        }
+
+        .user-message {
+            background-color: #d1ffd6;
+            align-self: flex-end;
+        }
+
+        /* Input area */
+        .chat-input {
+            display: flex;
+            border-top: 1px solid #ccc;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            outline: none;
+        }
+
+        .chat-input button {
+            background-color: #0078d7;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .chat-input button:hover {
+            background-color: #005fa3;
+        }
+
+        /* Clickable menu buttons */
+        .menu-option {
+            display: inline-block;
+            background-color: #0078d7;
+            color: white;
+            padding: 6px 10px;
+            margin: 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .menu-option:hover {
+            background-color: #005fa3;
+        }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <div class="chat-header">📚 Study Portal Chatbot</div>
+        <div class="chat-messages" id="chatbox">
+            <!-- Messages will be appended here -->
+        </div>
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="Type your message..." />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        function appendMessage(text, sender = "bot") {
+            let chatbox = document.getElementById("chatbox");
+            let message = document.createElement("div");
+            message.classList.add("message");
+            message.classList.add(sender === "bot" ? "bot-message" : "user-message");
+            message.innerHTML = text;
+            chatbox.appendChild(message);
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
+
+        function sendMessage() {
+            let input = document.getElementById("userInput");
+            let text = input.value.trim();
+            if (!text) return;
+            appendMessage(text, "user");
+
+            fetch(`/chatbot-api/?message=${encodeURIComponent(text)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.options) {
+                        appendMessage(data.message);
+                        let optionsHTML = "";
+                        data.options.forEach(opt => {
+                            optionsHTML += `<div class="menu-option" onclick="sendMenu('${opt}')">${opt}</div>`;
+                        });
+                        appendMessage(optionsHTML);
+                    } else {
+                        appendMessage(data.message);
+                    }
+                });
+
+            input.value = "";
+        }
+
+        function sendMenu(option) {
+            appendMessage(option, "user");
+            fetch(`/chatbot-api/?message=${encodeURIComponent(option)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.options) {
+                        appendMessage(data.message);
+                        let optionsHTML = "";
+                        data.options.forEach(opt => {
+                            optionsHTML += `<div class="menu-option" onclick="sendMenu('${opt}')">${opt}</div>`;
+                        });
+                        appendMessage(optionsHTML);
+                    } else {
+                        appendMessage(data.message);
+                    }
+                });
+        }
+
+        // Load initial greeting
+        window.onload = function () {
+            fetch(`/chatbot-api/`)
+                .then(res => res.json())
+                .then(data => {
+                    appendMessage(data.message);
+                    if (data.options) {
+                        let optionsHTML = "";
+                        data.options.forEach(opt => {
+                            optionsHTML += `<div class="menu-option" onclick="sendMenu('${opt}')">${opt}</div>`;
+                        });
+                        appendMessage(optionsHTML);
+                    }
+                });
+        };
+    </script>
+</body>
+</html>
