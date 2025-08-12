@@ -16,7 +16,7 @@ class Teacher(models.Model):
 
 class Availability(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
-    time_slot = models.CharField(max_length=100)  # e.g., "Mon 10-11 AM"
+    time_slot = models.CharField(max_length=100)  
 
     def __str__(self):
         return f"{self.teacher.name} - {self.time_slot}"
