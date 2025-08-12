@@ -22,14 +22,20 @@ def chatbot_api(request):
         subjects = Subject.objects.all()
         response = {
             "message": "Here are the available subjects:",
-            "options": [{"label": s.name, "link": s.website_link} for s in subjects]
+            "options": [
+                {"label": str(s.name), "link": s.website_link or ""}
+                for s in subjects
+            ]
         }
 
     elif step == 'doubt_subject':
         subjects = Subject.objects.all()
         response = {
             "message": "In which subject do you have a doubt?",
-            "options": [{"label": s.name, "next": f"choose_teacher_{s.id}"} for s in subjects]
+            "options": [
+                {"label": str(s.name), "next": f"choose_teacher_{s.id}"}
+                for s in subjects
+            ]
         }
 
     elif step.startswith('choose_teacher_'):
@@ -37,7 +43,10 @@ def chatbot_api(request):
         teachers = Teacher.objects.filter(subject_id=subject_id)
         response = {
             "message": "Select a teacher:",
-            "options": [{"label": t.name, "next": f"teacher_time_{t.id}"} for t in teachers]
+            "options": [
+                {"label": str(t.name), "next": f"teacher_time_{t.id}"}
+                for t in teachers
+            ]
         }
 
     elif step.startswith('teacher_time_'):
@@ -45,7 +54,10 @@ def chatbot_api(request):
         times = Availability.objects.filter(teacher_id=teacher_id)
         response = {
             "message": "Available times for this teacher:",
-            "options": [{"label": a.time_slot} for a in times]
+            "options": [
+                {"label": str(a.time_slot)}
+                for a in times
+            ]
         }
 
     return JsonResponse(response)

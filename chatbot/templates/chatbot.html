@@ -112,75 +112,60 @@
             <button onclick="sendMessage()">Send</button>
         </div>
     </div>
+<script>
+    function appendMessage(text, sender = "bot") {
+        let chatbox = document.getElementById("chatbox");
+        let message = document.createElement("div");
+        message.classList.add("message");
+        message.classList.add(sender === "bot" ? "bot-message" : "user-message");
+        message.innerHTML = text;
+        chatbox.appendChild(message);
+        chatbox.scrollTop = chatbox.scrollHeight;
+    }
 
-    <script>
-        function appendMessage(text, sender = "bot") {
-            let chatbox = document.getElementById("chatbox");
-            let message = document.createElement("div");
-            message.classList.add("message");
-            message.classList.add(sender === "bot" ? "bot-message" : "user-message");
-            message.innerHTML = text;
-            chatbox.appendChild(message);
-            chatbox.scrollTop = chatbox.scrollHeight;
+    function sendMessage() {
+        let input = document.getElementById("userInput");
+        let text = input.value.trim();
+        if (!text) return;
+        appendMessage(text, "user");
+
+        fetch(`/chatbot-api/?step=${encodeURIComponent(text)}`)
+            .then(res => res.json())
+            .then(showBotResponse);
+
+        input.value = "";
+    }
+
+    function sendMenu(label, step) {
+        appendMessage(label, "user");
+        fetch(`/chatbot-api/?step=${encodeURIComponent(step)}`)
+            .then(res => res.json())
+            .then(showBotResponse);
+    }
+
+    function showBotResponse(data) {
+        appendMessage(data.message);
+        if (data.options) {
+            let optionsHTML = "";
+            data.options.forEach(opt => {
+                // If backend returns link, open in new tab
+                if (opt.link) {
+                    optionsHTML += `<a href="${opt.link}" target="_blank" class="menu-option">${opt.label}</a>`;
+                } else {
+                    optionsHTML += `<div class="menu-option" onclick="sendMenu('${opt.label}', '${opt.next}')">${opt.label}</div>`;
+                }
+            });
+            appendMessage(optionsHTML);
         }
+    }
 
-        function sendMessage() {
-            let input = document.getElementById("userInput");
-            let text = input.value.trim();
-            if (!text) return;
-            appendMessage(text, "user");
+    // Load initial greeting once
+    window.onload = function () {
+        fetch(`/chatbot-api/?step=start`)
+            .then(res => res.json())
+            .then(showBotResponse);
+    };
+</script>
 
-            fetch(`/chatbot-api/?message=${encodeURIComponent(text)}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.options) {
-                        appendMessage(data.message);
-                        let optionsHTML = "";
-                        data.options.forEach(opt => {
-                            optionsHTML += `<div class="menu-option" onclick="sendMenu('${opt}')">${opt}</div>`;
-                        });
-                        appendMessage(optionsHTML);
-                    } else {
-                        appendMessage(data.message);
-                    }
-                });
-
-            input.value = "";
-        }
-
-        function sendMenu(option) {
-            appendMessage(option, "user");
-            fetch(`/chatbot-api/?message=${encodeURIComponent(option)}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.options) {
-                        appendMessage(data.message);
-                        let optionsHTML = "";
-                        data.options.forEach(opt => {
-                            optionsHTML += `<div class="menu-option" onclick="sendMenu('${opt}')">${opt}</div>`;
-                        });
-                        appendMessage(optionsHTML);
-                    } else {
-                        appendMessage(data.message);
-                    }
-                });
-        }
-
-        // Load initial greeting
-        window.onload = function () {
-            fetch(`/chatbot-api/`)
-                .then(res => res.json())
-                .then(data => {
-                    appendMessage(data.message);
-                    if (data.options) {
-                        let optionsHTML = "";
-                        data.options.forEach(opt => {
-                            optionsHTML += `<div class="menu-option" onclick="sendMenu('${opt}')">${opt}</div>`;
-                        });
-                        appendMessage(optionsHTML);
-                    }
-                });
-        };
-    </script>
 </body>
 </html>
